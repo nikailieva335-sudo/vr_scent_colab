@@ -1,0 +1,36 @@
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Main application container */
+#app {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* Babylon.js rendering canvas */
+#renderCanvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  outline: none;
+  touch-action: none;
+}
+
+/* Prevent unwanted scrolling on mobile and VR browsers */
+body {
+  position: fixed;
+  inset: 0;
+}
