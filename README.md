@@ -45,3 +45,15 @@ automatic reconnection.
 
 The Arduino's replies ("Atomizer ON - 3 seconds", ...) are logged to the
 browser console.
+
+## Testing on the Mac (no headset)
+
+Plug the Arduino into the Mac and open the app in desktop Chrome or Edge
+with **`?serial=native`**, e.g. `http://localhost:5173/?serial=native`.
+This uses the browser's built-in Web Serial API with the same button and
+the same bytes. (WebUSB can't open the Arduino on macOS, because the
+system's serial driver already owns it.) The status line shows which mode
+is active.
+
+Only one program can have the port open: close the Arduino IDE's Serial
+Monitor first.

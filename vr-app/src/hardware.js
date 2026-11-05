@@ -7,8 +7,18 @@ import { serial as usbSerial } from "web-serial-polyfill";
 // Protocol (unchanged from the old Node bridge): one ASCII byte, no newline.
 //   "1" = atomizer on for 3 seconds, "0" = off immediately.
 // The Arduino answers with status lines, which we only log to the console.
+//
+// ?serial=native uses the browser's own Web Serial API instead, for testing
+// in desktop Chrome on the Mac (where the OS serial driver owns the Arduino,
+// so WebUSB can't open it). Both have the same requestPort/getPorts/open API.
 
 const BAUD_RATE = 115200;
+
+const useNative = new URLSearchParams(location.search).get("serial") === "native";
+
+// Which serial API to use, and where its connect/disconnect events come from
+const serialApi = useNative ? navigator.serial : navigator.usb && usbSerial;
+const deviceEvents = useNative ? navigator.serial : navigator.usb;
 
 const encoder = new TextEncoder();
 
@@ -23,7 +33,10 @@ let writeQueue = Promise.resolve();
 let wantConnected = false;
 
 const statusListeners = new Set();
-let status = { state: "disconnected", message: "Not connected" };
+let status = {
+    state: "disconnected",
+    message: `Not connected (${useNative ? "native Web Serial" : "WebUSB"})`
+};
 
 function setStatus(state, message) {
     status = { state, message };
@@ -64,10 +77,12 @@ async function openPort(newPort) {
 // Must be called from a user gesture (button click): it shows the browser's
 // USB device picker.
 export async function connectArduino() {
-    if (!navigator.usb) {
+    if (!serialApi) {
         setStatus(
             "error",
-            "WebUSB isn't available. Use the Quest Browser or Chrome, over HTTPS or localhost."
+            useNative
+                ? "Web Serial isn't available. Use desktop Chrome or Edge, over HTTPS or localhost."
+                : "WebUSB isn't available. Use the Quest Browser or Chrome, over HTTPS or localhost."
         );
         return;
     }
@@ -75,7 +90,7 @@ export async function connectArduino() {
     let newPort;
 
     try {
-        newPort = await usbSerial.requestPort();
+        newPort = await serialApi.requestPort();
     } catch (error) {
         // NotFoundError: the picker was closed without choosing a device
         setStatus(
@@ -89,7 +104,11 @@ export async function connectArduino() {
         await openPort(newPort);
         wantConnected = true;
     } catch (error) {
-        setStatus("error", `Couldn't open device: ${errorText(error)}`);
+        setStatus(
+            "error",
+            `Couldn't open device: ${errorText(error)}` +
+                (useNative ? "" : " (On a desktop, add ?serial=native to the URL.)")
+        );
     }
 }
 
@@ -201,10 +220,10 @@ export function activateAtomizer() {
 // Replugging: reopen the device if the user hadn't disconnected on purpose.
 // Only devices the user already granted show up in getPorts(), so this
 // needs no picker.
-if (navigator.usb) {
-    navigator.usb.addEventListener("disconnect", async () => {
+if (deviceEvents) {
+    deviceEvents.addEventListener("disconnect", async () => {
         if (port && wantConnected) {
-            const ports = await usbSerial.getPorts();
+            const ports = await serialApi.getPorts();
 
             if (ports.length === 0) {
                 await handleLostConnection(new Error("device unplugged"));
@@ -212,12 +231,12 @@ if (navigator.usb) {
         }
     });
 
-    navigator.usb.addEventListener("connect", async () => {
+    deviceEvents.addEventListener("connect", async () => {
         if (!wantConnected || port) {
             return;
         }
 
-        const ports = await usbSerial.getPorts();
+        const ports = await serialApi.getPorts();
 
         if (ports.length === 0) {
             return;
