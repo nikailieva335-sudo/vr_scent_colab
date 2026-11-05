@@ -1,4 +1,6 @@
+
 import { activateAtomizer } from "./hardware.js";
+
 import {
   Engine,
   Scene,
@@ -63,14 +65,18 @@ ground.material = groundMaterial;
 // Create flower
 createFlower(scene);
 
-// Create invitation and sniff button
+
+// ------------------------------------
+// FLOWER SNIFF INTERACTION
+// ------------------------------------
+
 function showSniffInvitation() {
 
-  // Remove existing invitation
+  // Remove any existing invitation
   const oldPanel = document.getElementById("sniffPanel");
 
   if (oldPanel) {
-      oldPanel.remove();
+    oldPanel.remove();
   }
 
   // Create panel
@@ -113,30 +119,33 @@ function showSniffInvitation() {
   button.style.borderRadius = "12px";
   button.style.cursor = "pointer";
 
-  // Hover effect
+  // Hover effects
   button.onmouseenter = () => {
-      button.style.background = "#ff3f8e";
+    button.style.background = "#ff3f8e";
   };
 
   button.onmouseleave = () => {
-      button.style.background = "#ff69a6";
+    button.style.background = "#ff69a6";
   };
 
-  // Actual sniff interaction
+  // Sniff interaction
   button.addEventListener("click", () => {
 
     console.log("SNIFF ACTIVATED!");
 
-    // Disable the button so it cannot be clicked again
+    // Prevent repeated clicks on this button
     button.disabled = true;
     button.style.background = "#8a4fff";
     button.style.cursor = "default";
     button.style.opacity = "0.8";
 
-
-      // TODO: Send atomizer activation command here
-
+    // Activate atomizer
     activateAtomizer();
+
+    // Remove invitation after activation
+    setTimeout(() => {
+      panel.remove();
+    }, 500);
 
   });
 
@@ -147,28 +156,40 @@ function showSniffInvitation() {
   document.body.appendChild(panel);
 }
 
-// Detect flower clicks
+
+// ------------------------------------
+// DETECT FLOWER CLICKS
+// ------------------------------------
+
 scene.onPointerObservable.add((pointerInfo) => {
 
   if (pointerInfo.type === PointerEventTypes.POINTERPICK) {
 
-      const pickedMesh = pointerInfo.pickInfo?.pickedMesh;
+    const pickedMesh = pointerInfo.pickInfo?.pickedMesh;
 
-      if (pickedMesh?.metadata?.type === "flower") {
+    if (pickedMesh?.metadata?.type === "flower") {
 
-          console.log("Flower selected!");
+      console.log("Flower selected!");
 
-          showSniffInvitation();
-      }
+      showSniffInvitation();
+    }
   }
 });
 
-// Render
+
+// ------------------------------------
+// RENDER LOOP
+// ------------------------------------
+
 engine.runRenderLoop(() => {
   scene.render();
 });
 
-// Resize
+
+// ------------------------------------
+// RESIZE
+// ------------------------------------
+
 window.addEventListener("resize", () => {
   engine.resize();
 });
