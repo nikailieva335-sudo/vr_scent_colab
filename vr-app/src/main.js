@@ -10,7 +10,6 @@ import {
   MeshBuilder,
   StandardMaterial,
   Color3,
-  Mesh,
   PointerEventTypes
 } from "@babylonjs/core";
 
@@ -91,6 +90,7 @@ let sniffPanel = null;
 function closeSniffInvitation() {
 
   if (sniffPanel) {
+    scene.onBeforeRenderObservable.remove(sniffPanel.turnObserver);
     sniffPanel.texture.dispose();
     sniffPanel.plane.dispose();
     sniffPanel = null;
@@ -102,7 +102,7 @@ function showSniffInvitation() {
   // Remove any existing invitation
   closeSniffInvitation();
 
-  // Panel mesh beside the flower, always turned toward the viewer
+  // Panel mesh beside the flower
   const plane = MeshBuilder.CreatePlane(
     "sniffPanel",
     { width: 1, height: 0.5 },
@@ -110,7 +110,14 @@ function showSniffInvitation() {
   );
 
   plane.position = new Vector3(1.3, 1.7, 0);
-  plane.billboardMode = Mesh.BILLBOARDMODE_ALL;
+
+  // Keep it upright and turned toward where the viewer stands. (Babylon's
+  // billboard modes follow the camera's orientation, so in VR the panel
+  // turned and tilted with every head movement.) The plane's front faces -Z.
+  const turnObserver = scene.onBeforeRenderObservable.add(() => {
+    const toViewer = scene.activeCamera.globalPosition.subtract(plane.position);
+    plane.rotation.y = Math.atan2(-toViewer.x, -toViewer.z);
+  });
 
   const texture = AdvancedDynamicTexture.CreateForMesh(plane, 1024, 512);
 
@@ -199,7 +206,7 @@ function showSniffInvitation() {
     }, 500);
   });
 
-  sniffPanel = { plane, texture };
+  sniffPanel = { plane, texture, turnObserver };
 }
 
 
