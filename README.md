@@ -57,3 +57,14 @@ is active.
 
 Only one program can have the port open: close the Arduino IDE's Serial
 Monitor first.
+
+## Troubleshooting
+
+**`npm run dev` fails with "Cannot find native binding"** (seen on an
+Apple Silicon Mac): npm skipped Vite's macOS bundler binary. Install it
+without changing the lockfile:
+
+```
+cd vr-app
+npm install --no-save @rolldown/binding-darwin-arm64@$(node -p "require('rolldown/package.json').version")
+```
