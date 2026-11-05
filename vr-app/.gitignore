@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Self-signed HTTPS certificate for npm run quest
+.certs/

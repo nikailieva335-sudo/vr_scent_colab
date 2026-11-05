@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "quest": "sh tools/serve_quest.sh",
     "build": "vite build",
     "preview": "vite preview"
   },
