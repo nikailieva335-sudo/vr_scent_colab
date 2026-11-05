@@ -1,40 +1,81 @@
-// Ultrasonic atomizer module (active-LOW), controlled from the Serial Monitor
-// Type 1 = atomizer ON, 0 = atomizer OFF
-//
-// Wiring (Nano Every):
-//   Module S -> D14 (pin labeled A0)
-//   Module V -> 5V
-//   Module G -> GND
 
 const int ATOMIZER_PIN = 14;
-const int ON  = LOW;    // module turns on when S is pulled LOW
-const int OFF = HIGH;
+
+const int ATOMIZER_ON  = LOW;
+const int ATOMIZER_OFF = HIGH;
+
+// duration of scent release in milliseconds
+const unsigned long ATOMIZER_DURATION_MS = 3000;
+
+bool atomizerActive = false;
+unsigned long activationStartTime = 0;
+
+
+void turnAtomizerOff()
+{
+    digitalWrite(ATOMIZER_PIN, ATOMIZER_OFF);
+
+    if (atomizerActive)
+    {
+        atomizerActive = false;
+        Serial.println("Atomizer OFF");
+    }
+}
+
+
+// Turn atomizer ON for 3 seconds
+void activateAtomizer()
+{
+    if (atomizerActive)
+    {
+        Serial.println("Atomizer already active");
+        return;
+    }
+
+    digitalWrite(ATOMIZER_PIN, ATOMIZER_ON);
+
+    activationStartTime = millis();
+    atomizerActive = true;
+
+    Serial.println("Atomizer ON - 3 seconds");
+}
+
 
 void setup()
 {
-  digitalWrite(ATOMIZER_PIN, OFF);   // set level before enabling output
-  pinMode(ATOMIZER_PIN, OUTPUT);
 
-  Serial.begin(115200);
-  while (!Serial) { }
-  Serial.println("Type 1 for ON, 0 for OFF");
+    digitalWrite(ATOMIZER_PIN, ATOMIZER_OFF);
+    pinMode(ATOMIZER_PIN, OUTPUT);
+
+    digitalWrite(ATOMIZER_PIN, ATOMIZER_OFF);
+    Serial.begin(115200);
+
+    Serial.println("Atomizer controller ready");
+    Serial.println("Send 1 = ON for 3 seconds");
+    Serial.println("Send 0 = OFF immediately");
 }
+
 
 void loop()
 {
-  if (Serial.available() > 0)
-  {
-    char c = Serial.read();
 
-    if (c == '1')
+    while (Serial.available() > 0)
     {
-      digitalWrite(ATOMIZER_PIN, ON);
-      Serial.println("Atomizer ON");
+        char command = Serial.read();
+
+        if (command == '1')
+        {
+            activateAtomizer();
+        }
+        else if (command == '0')
+        {
+            turnAtomizerOff();
+        }
     }
-    else if (c == '0')
+
+    if (atomizerActive &&
+        millis() - activationStartTime >= ATOMIZER_DURATION_MS)
     {
-      digitalWrite(ATOMIZER_PIN, OFF);
-      Serial.println("Atomizer OFF");
+        turnAtomizerOff();
     }
-  }
 }
