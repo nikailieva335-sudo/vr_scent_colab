@@ -15,6 +15,7 @@ import {
 
 import "./style.css";
 import { createFlower } from "./flower.js";
+import { createConnectionPanel } from "./connectionPanel.js";
 
 // Get application container
 const app = document.querySelector("#app");
@@ -64,6 +65,9 @@ ground.material = groundMaterial;
 
 // Create flower
 createFlower(scene);
+
+// Connect Arduino button
+createConnectionPanel();
 
 
 // ------------------------------------
