@@ -85,14 +85,14 @@ There's no lint, type check or test suite; `npx vite build` is the check.
 
 ## Current status (2026-11-05)
 
-Work is on the local branch `browser-serial`, **not pushed**: push only
-after it's verified on both the Quest and the Mac.
+Work is on the branch `browser-serial` (pushed to origin, not merged into
+`main` yet).
 
 | Check | Status |
 |---|---|
 | Build, page loads in both modes | done |
 | Mac, `?serial=native`: connect, sniff, unplug/replug auto-reconnect, disconnect/reconnect | verified on hardware |
-| Quest, WebUSB polyfill: connect, sniff, unplug/replug | not yet tested |
+| Quest 3, WebUSB polyfill (Arduino in the headset's USB-C): connect, sniff, unplug/replug, disconnect/reconnect | verified on hardware |
 | Inside immersive WebXR | not built yet |
 
 Next: **WebXR** (`createDefaultXRExperienceAsync`, ground as floor,
