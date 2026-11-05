@@ -71,8 +71,8 @@ const groundMaterial = new StandardMaterial("groundMaterial", scene);
 groundMaterial.diffuseColor = new Color3(0.2, 0.4, 0.2);
 ground.material = groundMaterial;
 
-// Create flower
-createFlower(scene);
+// Create flower (returns its center sphere)
+const flowerCenter = createFlower(scene);
 
 // Connect Arduino button
 createConnectionPanel();
@@ -82,7 +82,7 @@ createConnectionPanel();
 // FLOWER SNIFF INTERACTION
 // ------------------------------------
 
-// A 3D panel next to the flower (Babylon GUI), so it also shows in VR.
+// A 3D panel above the flower (Babylon GUI), so it also shows in VR.
 // Desktop mouse clicks and VR controller rays both work on it.
 
 let sniffPanel = null;
@@ -102,14 +102,14 @@ function showSniffInvitation() {
   // Remove any existing invitation
   closeSniffInvitation();
 
-  // Panel mesh beside the flower
+  // Panel mesh just above the flower
   const plane = MeshBuilder.CreatePlane(
     "sniffPanel",
     { width: 1, height: 0.5 },
     scene
   );
 
-  plane.position = new Vector3(1.3, 1.7, 0);
+  plane.position = flowerCenter.position.add(new Vector3(0, 0.45, 0));
 
   // Keep it upright and turned toward where the viewer stands. (Babylon's
   // billboard modes follow the camera's orientation, so in VR the panel

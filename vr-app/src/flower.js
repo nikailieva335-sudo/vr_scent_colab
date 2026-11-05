@@ -6,9 +6,12 @@ import {
     Vector3
 } from "@babylonjs/core";
 
-// Height of the bloom above the ground, in meters: a little below a
-// standing adult's eyes, so in VR you look down over the petals at the center
-const BLOOM_HEIGHT = 1.35;
+// Height of the bloom above the ground, in meters: below a standing adult's
+// eyes, so in VR you look down over the petals at the center
+const BLOOM_HEIGHT = 1.2;
+
+// Size of the bloom (petals, center) and stem thickness, 1 = original size
+const FLOWER_SCALE = 0.75;
 
 export function createFlower(scene) {
 
@@ -27,7 +30,7 @@ export function createFlower(scene) {
 
         const petal = MeshBuilder.CreateSphere(
             `petal${i}`,
-            { diameter: 0.7 },
+            { diameter: 0.7 * FLOWER_SCALE },
             scene
         );
 
@@ -35,9 +38,9 @@ export function createFlower(scene) {
         petal.scaling.z = 0.7;
 
         petal.position = new Vector3(
-            Math.cos(angle) * 0.4,
+            Math.cos(angle) * 0.4 * FLOWER_SCALE,
             BLOOM_HEIGHT,
-            Math.sin(angle) * 0.4
+            Math.sin(angle) * 0.4 * FLOWER_SCALE
         );
 
         petal.rotation.y = -angle;
@@ -51,7 +54,7 @@ export function createFlower(scene) {
     // Create flower center
     const center = MeshBuilder.CreateSphere(
         "flowerCenter",
-        { diameter: 0.4 },
+        { diameter: 0.4 * FLOWER_SCALE },
         scene
     );
 
@@ -72,7 +75,7 @@ export function createFlower(scene) {
     // Create stem
     const stem = MeshBuilder.CreateCylinder(
         "stem",
-        { height: BLOOM_HEIGHT, diameter: 0.08 },
+        { height: BLOOM_HEIGHT, diameter: 0.08 * FLOWER_SCALE },
         scene
     );
 
