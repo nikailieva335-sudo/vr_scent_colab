@@ -1,3 +1,4 @@
+import { activateAtomizer } from "./hardware.js";
 import {
   Engine,
   Scene,
@@ -134,6 +135,8 @@ function showSniffInvitation() {
 
 
       // TODO: Send atomizer activation command here
+
+    activateAtomizer();
 
   });
 
