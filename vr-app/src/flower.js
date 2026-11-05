@@ -6,9 +6,9 @@ import {
     Vector3
 } from "@babylonjs/core";
 
-// Height of the bloom above the ground, in meters: about nose height for a
-// standing adult, so you can smell it in VR without bending down
-const BLOOM_HEIGHT = 1.65;
+// Height of the bloom above the ground, in meters: a little below a
+// standing adult's eyes, so in VR you look down over the petals at the center
+const BLOOM_HEIGHT = 1.35;
 
 export function createFlower(scene) {
 
