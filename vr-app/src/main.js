@@ -13,8 +13,17 @@ import {
   PointerEventTypes
 } from "@babylonjs/core";
 
+import {
+  AdvancedDynamicTexture,
+  Button,
+  Rectangle,
+  StackPanel,
+  TextBlock
+} from "@babylonjs/gui";
+
 import "./style.css";
 import { createFlower } from "./flower.js";
+import { createConnectionPanel } from "./connectionPanel.js";
 
 // Get application container
 const app = document.querySelector("#app");
@@ -62,98 +71,142 @@ const groundMaterial = new StandardMaterial("groundMaterial", scene);
 groundMaterial.diffuseColor = new Color3(0.2, 0.4, 0.2);
 ground.material = groundMaterial;
 
-// Create flower
-createFlower(scene);
+// Create flower (returns its center sphere)
+const flowerCenter = createFlower(scene);
+
+// Connect Arduino button
+createConnectionPanel();
 
 
 // ------------------------------------
 // FLOWER SNIFF INTERACTION
 // ------------------------------------
 
+// A 3D panel above the flower (Babylon GUI), so it also shows in VR.
+// Desktop mouse clicks and VR controller rays both work on it.
+
+let sniffPanel = null;
+
+function closeSniffInvitation() {
+
+  if (sniffPanel) {
+    scene.onBeforeRenderObservable.remove(sniffPanel.turnObserver);
+    sniffPanel.texture.dispose();
+    sniffPanel.plane.dispose();
+    sniffPanel = null;
+  }
+}
+
 function showSniffInvitation() {
 
   // Remove any existing invitation
-  const oldPanel = document.getElementById("sniffPanel");
+  closeSniffInvitation();
 
-  if (oldPanel) {
-    oldPanel.remove();
-  }
+  // Panel mesh just above the flower
+  const plane = MeshBuilder.CreatePlane(
+    "sniffPanel",
+    { width: 1, height: 0.5 },
+    scene
+  );
 
-  // Create panel
-  const panel = document.createElement("div");
-  panel.id = "sniffPanel";
+  plane.position = flowerCenter.position.add(new Vector3(0, 0.45, 0));
 
-  panel.style.position = "fixed";
-  panel.style.top = "40px";
-  panel.style.left = "50%";
-  panel.style.transform = "translateX(-50%)";
-  panel.style.background = "white";
-  panel.style.padding = "25px 35px";
-  panel.style.borderRadius = "18px";
-  panel.style.textAlign = "center";
-  panel.style.zIndex = "1000";
-  panel.style.boxShadow = "0 5px 20px rgba(0,0,0,0.3)";
-  panel.style.minWidth = "280px";
+  // Keep it upright and turned toward where the viewer stands. (Babylon's
+  // billboard modes follow the camera's orientation, so in VR the panel
+  // turned and tilted with every head movement.) The plane's front faces -Z.
+  const turnObserver = scene.onBeforeRenderObservable.add(() => {
+    const toViewer = scene.activeCamera.globalPosition.subtract(plane.position);
+    plane.rotation.y = Math.atan2(-toViewer.x, -toViewer.z);
+  });
+
+  const texture = AdvancedDynamicTexture.CreateForMesh(plane, 1024, 512);
+
+  // White rounded card
+  const card = new Rectangle("sniffCard");
+
+  card.background = "white";
+  card.cornerRadius = 36;
+  card.thickness = 0;
+  card.shadowColor = "rgba(0, 0, 0, 0.3)";
+  card.shadowBlur = 20;
+
+  texture.addControl(card);
+
+  const stack = new StackPanel("sniffStack");
+  card.addControl(stack);
 
   // Invitation message
-  const message = document.createElement("div");
+  const message = new TextBlock("sniffMessage", "Would you like to smell this flower?");
 
-  message.innerText = "Would you like to smell this flower?";
+  message.color = "#333";
+  message.fontSize = 52;
+  message.fontWeight = "bold";
+  message.height = "140px";
+  message.textWrapping = true;
+  message.width = "900px";
 
-  message.style.fontSize = "20px";
-  message.style.fontWeight = "bold";
-  message.style.color = "#333";
-  message.style.marginBottom = "18px";
+  stack.addControl(message);
 
   // Sniff button
-  const button = document.createElement("button");
+  const button = Button.CreateSimpleButton("sniffButton", "Sniff Me!");
 
-  button.innerText = "Sniff Me!";
+  button.width = "440px";
+  button.height = "150px";
+  button.paddingTop = "20px";
+  button.background = "#ff69a6";
+  button.color = "white";
+  button.fontSize = 64;
+  button.fontWeight = "bold";
+  button.thickness = 0;
+  button.cornerRadius = 30;
 
-  button.style.padding = "14px 30px";
-  button.style.background = "#ff69a6";
-  button.style.color = "white";
-  button.style.fontSize = "22px";
-  button.style.fontWeight = "bold";
-  button.style.border = "none";
-  button.style.borderRadius = "12px";
-  button.style.cursor = "pointer";
+  stack.addControl(button);
+
+  let activated = false;
 
   // Hover effects
-  button.onmouseenter = () => {
-    button.style.background = "#ff3f8e";
-  };
+  button.onPointerEnterObservable.add(() => {
+    if (!activated) {
+      button.background = "#ff3f8e";
+    }
+  });
 
-  button.onmouseleave = () => {
-    button.style.background = "#ff69a6";
-  };
+  button.onPointerOutObservable.add(() => {
+    if (!activated) {
+      button.background = "#ff69a6";
+    }
+  });
 
   // Sniff interaction
-  button.addEventListener("click", () => {
+  button.onPointerClickObservable.add(() => {
+
+    // Prevent repeated clicks on this button
+    if (activated) {
+      return;
+    }
+
+    activated = true;
 
     console.log("SNIFF ACTIVATED!");
 
-    // Prevent repeated clicks on this button
-    button.disabled = true;
-    button.style.background = "#8a4fff";
-    button.style.cursor = "default";
-    button.style.opacity = "0.8";
+    button.background = "#8a4fff";
+    button.alpha = 0.8;
+    button.hoverCursor = "default";
 
     // Activate atomizer
     activateAtomizer();
 
     // Remove invitation after activation
-    setTimeout(() => {
-      panel.remove();
-    }, 500);
+    const thisPanel = sniffPanel;
 
+    setTimeout(() => {
+      if (sniffPanel === thisPanel) {
+        closeSniffInvitation();
+      }
+    }, 500);
   });
 
-  // Add elements to panel
-  panel.appendChild(message);
-  panel.appendChild(button);
-
-  document.body.appendChild(panel);
+  sniffPanel = { plane, texture, turnObserver };
 }
 
 
@@ -174,6 +227,37 @@ scene.onPointerObservable.add((pointerInfo) => {
       showSniffInvitation();
     }
   }
+});
+
+
+// ------------------------------------
+// WEBXR
+// ------------------------------------
+
+// Adds the Enter VR button, controllers and teleporting on the ground.
+// The Arduino connection lives on the page, so it stays open while
+// entering and leaving VR.
+async function setupXR() {
+
+  if (!navigator.xr) {
+    console.log("WebXR not available: desktop only");
+    return;
+  }
+
+  const xr = await scene.createDefaultXRExperienceAsync({
+    floorMeshes: [ground]
+  });
+
+  // Babylon starts the headset at the desktop camera's position (2.5 m up)
+  // and then adds the real head height. Start on the floor instead, a step
+  // in front of the flower, facing it.
+  xr.baseExperience.onInitialXRPoseSetObservable.add((xrCamera) => {
+    xrCamera.position.set(0, 0, -1.2);
+  });
+}
+
+setupXR().catch((error) => {
+  console.error("WebXR setup failed:", error);
 });
 
 

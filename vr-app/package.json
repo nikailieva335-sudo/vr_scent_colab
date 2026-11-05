@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "quest": "sh tools/serve_quest.sh",
     "build": "vite build",
     "preview": "vite preview"
   },
@@ -13,8 +14,8 @@
   },
   "dependencies": {
     "@babylonjs/core": "^9.33.2",
+    "@babylonjs/gui": "^9.33.2",
     "@babylonjs/loaders": "^9.33.2",
-    "serialport": "^13.0.0",
-    "ws": "^8.22.1"
+    "web-serial-polyfill": "^1.0.15"
   }
 }
