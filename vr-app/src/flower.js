@@ -6,6 +6,10 @@ import {
     Vector3
 } from "@babylonjs/core";
 
+// Height of the bloom above the ground, in meters: about nose height for a
+// standing adult, so you can smell it in VR without bending down
+const BLOOM_HEIGHT = 1.65;
+
 export function createFlower(scene) {
 
     // Create a shared pink material for the petals
@@ -32,7 +36,7 @@ export function createFlower(scene) {
 
         petal.position = new Vector3(
             Math.cos(angle) * 0.4,
-            1.5,
+            BLOOM_HEIGHT,
             Math.sin(angle) * 0.4
         );
 
@@ -51,7 +55,7 @@ export function createFlower(scene) {
         scene
     );
 
-    center.position.y = 1.5;
+    center.position.y = BLOOM_HEIGHT;
 
     const centerMaterial = new StandardMaterial(
         "centerMaterial",
@@ -68,11 +72,11 @@ export function createFlower(scene) {
     // Create stem
     const stem = MeshBuilder.CreateCylinder(
         "stem",
-        { height: 1.5, diameter: 0.08 },
+        { height: BLOOM_HEIGHT, diameter: 0.08 },
         scene
     );
 
-    stem.position.y = 0.75;
+    stem.position.y = BLOOM_HEIGHT / 2;
 
     const stemMaterial = new StandardMaterial(
         "stemMaterial",
