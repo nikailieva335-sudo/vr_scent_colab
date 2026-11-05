@@ -15,8 +15,9 @@ the Mac is the second target, for testing without the headset.
 ```
 vr_scent_colab.ino      # Arduino firmware (atomizer on pin 14, active LOW)
 vr-app/                 # browser app, Vite + Babylon.js from npm
-  src/main.js           # scene, camera, Sniff Me! panel, flower click handling
-  src/flower.js         # flower meshes; parts tagged metadata {type: "flower"}
+  src/main.js           # scene, camera, WebXR, Sniff Me! panel, flower clicks
+  src/flower.js         # flower meshes; parts tagged metadata {type: "flower"};
+                        # BLOOM_HEIGHT and FLOWER_SCALE set its size
   src/hardware.js       # USB serial transport, activateAtomizer()
   src/connectionPanel.js# Connect/Disconnect Arduino button + status line
   tools/serve_quest.sh  # npm run quest (HTTPS on the LAN)
@@ -56,6 +57,29 @@ strings (use `errorText()`, not `error.message`), and its `close()` fails
 while the streams are locked, so `closePort()` releases the reader (waits
 for the read loop) before closing.
 
+## WebXR and the Sniff Me! panel (`src/main.js`)
+
+- `createDefaultXRExperienceAsync({ floorMeshes: [ground] })`: Enter VR
+  button, controllers, thumbstick teleport. The VR start pose is set in
+  `onInitialXRPoseSetObservable` to `(0, 0, -1.2)`, on the floor facing the
+  flower: Babylon otherwise starts at the desktop ArcRotateCamera's position
+  (2.5 m up) and adds the real head height on top.
+- Flower clicks are a `POINTERPICK` observer on parts tagged
+  `metadata.type === "flower"`. Controller trigger pulls go through
+  `scene.simulatePointerUp`, which fires `POINTERPICK` too, so the same
+  handler serves mouse and VR.
+- The panel is Babylon GUI (`AdvancedDynamicTexture.CreateForMesh` on a
+  1 × 0.5 m plane) 0.45 m above the flower's center sphere. Don't use
+  `billboardMode`: Babylon billboards follow the camera's orientation, so
+  in VR the panel turned and tilted with the head. Instead an
+  `onBeforeRenderObservable` yaws it toward the active camera's position
+  each frame (upright; the plane's front faces -Z).
+- Panel behavior, unchanged from the original HTML overlay: clicking the
+  flower replaces any open panel; the button fires once, turns purple and
+  the panel closes after 500 ms.
+- Flower: bloom at 1.2 m (`BLOOM_HEIGHT`), below standing eye height so you
+  look down at the center; 75% of the original size (`FLOWER_SCALE`).
+
 ## Running
 
 ```
@@ -86,19 +110,20 @@ There's no lint, type check or test suite; `npx vite build` is the check.
 ## Current status (2026-11-05)
 
 Work is on the branch `browser-serial` (pushed to origin, not merged into
-`main` yet).
+`main` yet; open a PR when ready, like #1 and #2).
 
 | Check | Status |
 |---|---|
 | Build, page loads in both modes | done |
 | Mac, `?serial=native`: connect, sniff, unplug/replug auto-reconnect, disconnect/reconnect | verified on hardware |
 | Quest 3, WebUSB polyfill (Arduino in the headset's USB-C): connect, sniff, unplug/replug, disconnect/reconnect | verified on hardware |
-| Inside immersive WebXR | not built yet |
+| Quest 3, immersive WebXR: start pose, flower → panel → Sniff Me! fires the atomizer, exit/re-enter VR keeps the connection, teleport | verified on hardware |
 
-Next: **WebXR** (`createDefaultXRExperienceAsync`, ground as floor,
-teleport), keeping the serial connection across entering/leaving VR, and
-rebuilding the Sniff Me! panel (currently an HTML overlay in `main.js`,
-invisible in the headset) as a Babylon GUI panel (`@babylonjs/gui` at the
-same version as core) with the same behavior. Whether the click → panel →
-button interaction sequence makes sense is to be discussed separately;
-don't redesign it while porting.
+## Future ideas (not planned yet)
+
+- **Distance-based trigger** instead of (or alongside) click → panel →
+  button: as the user's head (the XR camera) gets close to the flower
+  center, something visibly changes (e.g. the flower's color), and close
+  enough fires the scent. Whether the current interaction sequence makes
+  sense at all is still an open question.
+- **Particle effects** fired at the same moment the scent is released.

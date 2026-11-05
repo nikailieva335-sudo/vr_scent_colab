@@ -5,8 +5,9 @@ tells an Arduino Nano Every to run a scent atomizer for 3 seconds.
 
 - `vr_scent_colab.ino`: Arduino firmware. Reads single bytes over USB
   serial at 115200 baud: `1` = atomizer on for 3 seconds, `0` = off.
-- `vr-app/`: the browser app (Vite + Babylon.js). It talks to the
-  Arduino directly over USB, with no server or bridge in between.
+- `vr-app/`: the browser app (Vite + Babylon.js, WebXR for the Meta
+  Quest 3). It talks to the Arduino directly over USB, with no server or
+  bridge in between.
 
 ## Running
 
@@ -18,7 +19,7 @@ npm run quest # Quest 3: HTTPS on the LAN, prints the URL to open
 ```
 
 `npm run quest` (`tools/serve_quest.sh`) serves over HTTPS on port 3443,
-since WebUSB needs a secure context. It makes a self-signed certificate
+since WebUSB and WebXR need a secure context. It makes a self-signed certificate
 for the Mac's Wi-Fi IP in gitignored `vr-app/.certs/` (remade when the IP
 changes) and prints a URL like `https://10.197.40.1:3443/`. The Quest
 must be on the same Wi-Fi. The Quest Browser warns about the certificate:
@@ -35,10 +36,16 @@ The Quest Browser doesn't support Web Serial, so the app uses Google's
 2. Open the app URL in the Quest Browser.
 3. Press **Connect Arduino** (bottom left) and pick the Arduino in the
    device list. The status line turns green: "Connected".
-4. Click the flower, then **Sniff Me!**.
+4. Press **Enter VR** (bottom right). You start standing a step in front
+   of the flower.
+5. Point a controller at the flower and pull the trigger, then choose
+   **Sniff Me!** on the panel that appears above it. Teleport with the
+   thumbstick.
+
+It works outside VR too: tap the flower, then **Sniff Me!**.
 
 Connect before entering VR: the device picker only opens from a click on
-the page. If the cable is pulled, the status says so and the app
+the page. The connection stays open when you enter and leave VR. If the cable is pulled, the status says so and the app
 reconnects by itself when it's plugged back in (no picker the second
 time). **Disconnect Arduino** closes the connection on purpose and stops
 automatic reconnection.
